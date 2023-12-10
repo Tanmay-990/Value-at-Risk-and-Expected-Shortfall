@@ -1,0 +1,50 @@
+import numpy as np
+import pandas as pd
+import scipy.stats as scs
+
+n_sims= 1000000
+vol= 0.25
+T= 30 #days
+rfr = 0
+S= 2500
+summ=0
+
+
+#starting GBD
+drift = vol * np.sqrt(T/252)
+det= (rfr - 0.5 * vol**2) * T/252
+r = np.random.normal(0, 1,(n_sims,1))
+
+#simulated Stock Price
+sim_S   =  S * np.exp(drift*r + det)
+df      =  pd.DataFrame(sim_S, columns= ['sim_S'])
+
+#defining array of confidence level from 90% to 99%
+alpha_arr=[]
+for i in range(1,101):
+  alpha_arr.append(i/1000)
+
+#calculating array of VAR from 90% to 99% confidence level
+Var_arr = scs.scoreatpercentile(sim_S-1, alpha_arr)
+Var_arr[::-1].sort()
+
+#user input for the required Level of Significance
+alpha = float(input("Enter Significance Level in % (5% as .05)"))
+
+#indexing Significance Level to Find Required VAR
+index_no= alpha_arr.index(alpha)
+Var= Var_arr[index_no]
+
+
+#Conditional VaR
+
+#finding Conditional VaR for the same confidence level
+for i in range(0,100):
+  if Var_arr[i] >= Var:
+    summ += Var_arr[i]
+    x = i+1
+#Cvar
+Cvar= summ / x
+
+print("Conditional VaR is $", Cvar)
+print("VaR is $", Var)
